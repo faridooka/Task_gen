@@ -6,7 +6,7 @@ import openai
 import zipfile
 
 # 🔐 OpenAI кілті (арнайы .env арқылы сақтау ұсынылады)
-openai.api_key = "sk-proj-..."
+openai.api_key = "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"
 
 app = Flask(__name__)
 CORS(app)
