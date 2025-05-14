@@ -4,3 +4,4 @@ openai
 requests
 python-docx
 reportlab
+gunicorn
