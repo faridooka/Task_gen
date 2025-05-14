@@ -17,7 +17,7 @@ def generate_with_gpt(prompt):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a CLIL methodology expert. Generate classroom tasks for teachers that integrate subject content (e.g., biology), target language functions (e.g., describe, explain), and national or cultural values. The tasks must help learners improve both academic subject knowledge and language skills simultaneously. Respond in numbered format."},
+            {"role": "system", "content": "You are a CLIL methodology expert. Generate a list of classroom tasks for school teachers using the CLIL (Content and Language Integrated Learning) approach. Each task should:\n\n- follow one of the 15 formats (matching, short_answer, true_false, multiple_choice, fill_in_the_blank, ordering, open_ended, dialogue_completion, categorization, matching_definitions, gap_fill, table_completion, problem_solving, scenario_based, case_analysis);\n- integrate subject content, target language functions (e.g. define, explain, describe), and national or cultural values;\n- be written clearly and fully in one paragraph per task;\n- **do not number inner elements** inside the task body.\n\nUse the format:\nTask 1: ...\nTask 2: ..."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.7
