@@ -56,20 +56,42 @@ def download_docx():
 def download_pdf():
     data = request.json
     tasks = data.get("tasks", [])
+
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.units import inch
+
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     c = canvas.Canvas(temp_file.name, pagesize=letter)
+
     width, height = letter
-    y = height - 50
-    c.setFont("Helvetica", 12)
+    y = height - 60
+
+    c.setFont("Helvetica-Bold", 14)
     c.drawString(50, y, "CLIL Tasks")
     y -= 30
+
+    c.setFont("Helvetica", 12)
+
     for i, task in enumerate(tasks, start=1):
-        lines = c.beginText(50, y)
-        lines.textLine(f"{i}. {task}")
-        c.drawText(lines)
-        y -= 40
-        if y < 50:
-            c.showPage()
-            y = height - 50
+        wrapped_text = f"{i}. {task}"
+        text = c.beginText(50, y)
+        text.setFont("Helvetica", 12)
+
+        # Автоматически разбиваем на строки по 100 символов
+        max_chars = 100
+        lines = [wrapped_text[j:j+max_chars] for j in range(0, len(wrapped_text), max_chars)]
+        for line in lines:
+            text.textLine(line)
+            y -= 15
+            if y < 60:
+                c.drawText(text)
+                c.showPage()
+                y = height - 60
+                text = c.beginText(50, y)
+
+        c.drawText(text)
+        y -= 15
+
     c.save()
     return send_file(temp_file.name, as_attachment=True, download_name="clil_tasks.pdf")
