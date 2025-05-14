@@ -74,5 +74,4 @@ def download_pdf():
     c.save()
     return send_file(temp_file.name, as_attachment=True, download_name="clil_tasks.pdf")
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
