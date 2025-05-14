@@ -1,20 +1,20 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-import openai
-import tempfile
 import os
+import tempfile
 from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import requests
+from openai import OpenAI
 
 app = Flask(__name__)
 CORS(app)
 
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+# Новый синтаксис OpenAI >= 1.0.0
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 def generate_with_gpt(prompt):
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a CLIL methodology expert. Generate classroom tasks for teachers that integrate subject content (e.g., biology), target language functions (e.g., describe, explain), and national or cultural values. The tasks must help learners improve both academic subject knowledge and language skills simultaneously. Respond in numbered format."},
@@ -22,7 +22,7 @@ def generate_with_gpt(prompt):
         ],
         temperature=0.7
     )
-    return response.choices[0].message["content"]
+    return response.choices[0].message.content
 
 @app.route("/generate_gpt", methods=["POST"])
 def generate_gpt():
@@ -73,5 +73,3 @@ def download_pdf():
             y = height - 50
     c.save()
     return send_file(temp_file.name, as_attachment=True, download_name="clil_tasks.pdf")
-
-
