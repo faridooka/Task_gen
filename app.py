@@ -28,17 +28,34 @@ def generate_with_gpt(prompt):
 def generate_gpt():
     data = request.json
     topic = data["topic"]
-    format_type = data["format"]
-    level = data["level"]
-    count = int(data["count"])
-    subject = data.get("subject", "General")
 
-    prompt = f"Create {count} classroom tasks for the subject '{subject}' on the topic '{topic}', in the format '{format_type}', " \
-             f"and at the difficulty level '{level}'. Each task must integrate content knowledge, a language function (e.g., explain, define), " \
-             f"and a cultural or national value. Format: Task 1: ..., Task 2: ..., etc."
+    # CLIL принциптері бойынша, пән – Информатика
+    prompt = (
+        f"Generate one CLIL-based task set for the topic '{topic}' in the subject 'Informatics'.\n"
+        f"Use three integrated parts:\n"
+        f"📖 Reading – A task that asks the learner to read and understand the topic.\n"
+        f"✍️ Writing – A task that asks the learner to write or express in written form.\n"
+        f"🗣️ Speaking – A task that asks the learner to explain or describe the topic verbally.\n\n"
+        f"Each part should be 1–2 sentences long and clearly related to informatics.\n"
+        f"Return in JSON format like:\n"
+        f'{{"reading": "...", "writing": "...", "speaking": "..."}}'
+    )
 
-    result = generate_with_gpt(prompt)
-    return jsonify({"tasks": result.split("\n"), "answers": ["(See above)"]})
+    result_text = generate_with_gpt(prompt)
+
+    # JSON форматына парсинг
+    import json
+    try:
+        result_json = json.loads(result_text)
+    except json.JSONDecodeError:
+        result_json = {
+            "reading": f"Осы тақырыпқа қатысты мәтінді оқып, негізгі идеяларын анықтаңыз.",
+            "writing": f"'{topic}' тақырыбы бойынша өз ойыңызды жазбаша түрде білдіріңіз.",
+            "speaking": f"'{topic}' тақырыбын сыныптастарыңызбен талқылап, түсіндіріңіз."
+        }
+
+    return jsonify(result_json)
+
 
 @app.route("/download_docx", methods=["POST"])
 def download_docx():
