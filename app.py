@@ -29,7 +29,6 @@ def generate_gpt():
     data = request.json
     topic = data["topic"]
 
-    # CLIL принциптері бойынша, пән – Информатика
     prompt = (
         f"Generate one CLIL-based task set for the topic '{topic}' in the subject 'Informatics'.\n"
         f"Use three integrated parts:\n"
@@ -43,7 +42,6 @@ def generate_gpt():
 
     result_text = generate_with_gpt(prompt)
 
-    # JSON форматына парсинг
     import json
     try:
         result_json = json.loads(result_text)
@@ -54,8 +52,13 @@ def generate_gpt():
             "speaking": f"'{topic}' тақырыбын сыныптастарыңызбен талқылап, түсіндіріңіз."
         }
 
-    return jsonify(result_json)
-
+    # ✅ Тапсырмалар тізімін жасап, tasks[] ретінде қайтарамыз
+    tasks = [
+        "📖 Reading: " + result_json.get("reading", ""),
+        "✍️ Writing: " + result_json.get("writing", ""),
+        "🗣️ Speaking: " + result_json.get("speaking", "")
+    ]
+    return jsonify({"tasks": tasks})
 
 @app.route("/download_docx", methods=["POST"])
 def download_docx():
