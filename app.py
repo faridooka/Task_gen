@@ -7,7 +7,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from openai import OpenAI
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 # Новый синтаксис OpenAI >= 1.0.0
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 def generate_with_gpt(prompt):
