@@ -1,107 +1,63 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from openai import OpenAI
 import os
 import tempfile
 from docx import Document
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from openai import OpenAI
+import json
 
 app = Flask(__name__)
-CORS(app)
 
+# 👇 Тек осы сайтқа рұқсат береміз
+CORS(app, origins=["https://cliledu.kz"])
+
+# 👇 Барлық жауаптарға CORS headers қосу
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'https://cliledu.kz')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    return response
+
+# ✅ OpenAI клиенті
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 def generate_with_gpt(prompt):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a CLIL expert and task designer. Follow instructions strictly."},
+            {"role": "system", "content": "You are a CLIL methodology expert. Generate a set of tasks using the CLIL approach (reading, writing, speaking)."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.7
     )
     return response.choices[0].message.content
 
-@app.route("/generate_gpt", methods=["POST"])
+@app.route("/generate_gpt", methods=["POST", "OPTIONS"])
 def generate_gpt():
+    if request.method == "OPTIONS":
+        return jsonify({"message": "CORS preflight"}), 200
+
     data = request.json
-    topic = data.get("topic", "Informatics")
-    english_level = data.get("english_level", "A2")
-    bloom_level = data.get("bloom_level", "Understand")
-    task_type = data.get("task_type", "question")
+    topic = data.get("topic", "Unknown Topic")
 
     prompt = (
-        f"Create CLIL-based tasks for the topic '{topic}' in Informatics.\n"
-        f"Include the 3 CLIL components:\n"
-        f"📖 Reading – task requiring reading/comprehension.\n"
-        f"✍️ Writing – task requiring written expression.\n"
-        f"🗣️ Speaking – task requiring verbal explanation.\n\n"
-        f"Each task should be 1–2 sentences.\n"
-        f"English level: {english_level}\n"
-        f"Bloom's taxonomy level: {bloom_level}\n"
-        f"Task type: {task_type}\n\n"
-        f"Return JSON format:\n"
+        f"Generate one CLIL-based task set for the topic '{topic}' in the subject 'Informatics'.\n"
+        f"Use three integrated parts:\n"
+        f"📖 Reading – A task that asks the learner to read and understand the topic.\n"
+        f"✍️ Writing – A task that asks the learner to write or express in written form.\n"
+        f"🗣️ Speaking – A task that asks the learner to explain or describe the topic verbally.\n\n"
+        f"Each part should be 1–2 sentences long and clearly related to informatics.\n"
+        f"Return in JSON format like:\n"
         f'{{"reading": "...", "writing": "...", "speaking": "..."}}'
     )
 
     try:
         result_text = generate_with_gpt(prompt)
-        import json
         result_json = json.loads(result_text)
     except Exception:
         result_json = {
-            "reading": f"'{topic}' тақырыбына байланысты мәтінді оқып, негізгі ақпаратты бөліп көрсетіңіз.",
-            "writing": f"'{topic}' тақырыбы бойынша қысқаша мақала жазыңыз.",
-            "speaking": f"'{topic}' тақырыбын ауызша түсіндіріп беріңіз."
-        }
-
-    tasks = [
-        "📖 Reading: " + result_json.get("reading", ""),
-        "✍️ Writing: " + result_json.get("writing", ""),
-        "🗣️ Speaking: " + result_json.get("speaking", "")
-    ]
-    return jsonify({"tasks": tasks})
-
-@app.route("/download_docx", methods=["POST"])
-def download_docx():
-    data = request.json
-    tasks = data.get("tasks", [])
-    doc = Document()
-    doc.add_heading('CLIL Tasks', level=1)
-    for i, task in enumerate(tasks, start=1):
-        doc.add_paragraph(f"{i}. {task}")
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
-    doc.save(temp_file.name)
-    return send_file(temp_file.name, as_attachment=True, download_name="clil_tasks.docx")
-
-@app.route("/download_pdf", methods=["POST"])
-def download_pdf():
-    data = request.json
-    tasks = data.get("tasks", [])
-
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    c = canvas.Canvas(temp_file.name, pagesize=letter)
-
-    width, height = letter
-    y = height - 50
-
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, y, "CLIL Tasks")
-    y -= 30
-
-    c.setFont("Helvetica", 12)
-    for i, task in enumerate(tasks, start=1):
-        lines = [f"{i}. {task}"]
-        for line in lines:
-            c.drawString(50, y, line)
-            y -= 20
-            if y < 60:
-                c.showPage()
-                y = height - 50
-
-    c.save()
-    return send_file(temp_file.name, as_attachment=True, download_name="clil_tasks.pdf")
-
-if __name__ == "__main__":
-    app.run(debug=True)
+            "reading": f"Осы тақырыпқа қатысты мәтінді оқып, негізгі идеяларын анықтаңыз.",
+            "writing": f"'{topic}' тақырыбы бойынша өз ойыңызды жазбаша түрде білдіріңіз.",
