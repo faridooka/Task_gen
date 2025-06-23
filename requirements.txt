@@ -1,7 +1,6 @@
 flask
 flask-cors
 openai
-requests
 python-docx
 reportlab
 gunicorn
